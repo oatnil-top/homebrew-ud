@@ -33,7 +33,7 @@ if [ -z "$DARWIN_ARM64_SHA" ] || [ -z "$DARWIN_AMD64_SHA" ] || [ -z "$LINUX_ARM6
     exit 1
 fi
 
-CDN_BASE_URL="https://oatnil-public.s3.bitiful.net/cli/releases"
+CDN_BASE_URL="https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases"
 
 cat > "$FORMULA_FILE" << EOF
 # typed: false
