@@ -22,11 +22,11 @@ if [ ! -f "$CHECKSUMS_FILE" ]; then
     exit 1
 fi
 
-# Extract checksums
-DARWIN_ARM64_SHA=$(grep "darwin_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
-DARWIN_AMD64_SHA=$(grep "darwin_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
-LINUX_ARM64_SHA=$(grep "linux_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
-LINUX_AMD64_SHA=$(grep "linux_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
+# Extract checksums - match specific version to avoid mixing with other versions
+DARWIN_ARM64_SHA=$(grep "ud_${VERSION}_darwin_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
+DARWIN_AMD64_SHA=$(grep "ud_${VERSION}_darwin_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
+LINUX_ARM64_SHA=$(grep "ud_${VERSION}_linux_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
+LINUX_AMD64_SHA=$(grep "ud_${VERSION}_linux_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
 
 if [ -z "$DARWIN_ARM64_SHA" ] || [ -z "$DARWIN_AMD64_SHA" ] || [ -z "$LINUX_ARM64_SHA" ] || [ -z "$LINUX_AMD64_SHA" ]; then
     echo "Error: Could not extract all checksums from $CHECKSUMS_FILE"
