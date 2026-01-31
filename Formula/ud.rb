@@ -1,46 +1,46 @@
 class Ud < Formula
   desc "UnderControl CLI - task and expense management from the terminal"
   homepage "https://github.com/oatnil-top/ud-cli"
-  version "0.21.7"
+  version "0.21.8"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.7/ud_0.21.7_darwin_arm64.tar.gz"
-      sha256 "6429fa4b19b066a66e43d91645d3fb63494ec19da3a495c53fb4a9c1dd626bba"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.8/ud_0.21.8_darwin_arm64.tar.gz"
+      sha256 "bce493180b346db40221b42e1e1ef50d98a4f5d29f857c4101d63c51c9544a45"
 
       def install
-        bin.install "ud_0.21.7_darwin_arm64" => "ud"
+        bin.install "ud_0.21.8_darwin_arm64" => "ud"
       end
     else
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.7/ud_0.21.7_darwin_amd64.tar.gz"
-      sha256 "e0b8bdbcc1fe4bc4eba4a22794df2104dbe76f86da214413a29f7e69369e53c9"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.8/ud_0.21.8_darwin_amd64.tar.gz"
+      sha256 "b819c7af67b2629b0a6fcb87d00dca81391e5c5a3b2196518308c461f2bc7dd2"
 
       def install
-        bin.install "ud_0.21.7_darwin_amd64" => "ud"
+        bin.install "ud_0.21.8_darwin_amd64" => "ud"
       end
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.7/ud_0.21.7_linux_arm64.tar.gz"
-      sha256 "ec81420265440e2d50d51eed6d8bd427ae9231ff881b0438c3f6888fb4673e32"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.8/ud_0.21.8_linux_arm64.tar.gz"
+      sha256 "ba425c62f36ae679a8ce5cc2487364e0a008bcbcd0b0aa95d9db81d88ce2d60b"
 
       def install
-        bin.install "ud_0.21.7_linux_arm64" => "ud"
+        bin.install "ud_0.21.8_linux_arm64" => "ud"
       end
     else
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.7/ud_0.21.7_linux_amd64.tar.gz"
-      sha256 "5f2050bdc4313e7b8a1bb54204f549041af57aa0bb9c257890b668ea961034c9"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.21.8/ud_0.21.8_linux_amd64.tar.gz"
+      sha256 "cd0b9ed9874728a91acb34798d9af97469978daad725103213d5d5ab1e69a0b6"
 
       def install
-        bin.install "ud_0.21.7_linux_amd64" => "ud"
+        bin.install "ud_0.21.8_linux_amd64" => "ud"
       end
     end
   end
 
   test do
-    assert_match "ud version 0.21.7", shell_output("#{bin}/ud --version")
+    assert_match "ud version 0.21.8", shell_output("#{bin}/ud --version")
   end
 end
