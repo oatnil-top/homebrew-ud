@@ -5,7 +5,7 @@ class Ud < Formula
   desc "UnderControl CLI - task and expense management from the terminal"
   homepage "https://github.com/oatnil-top/ud-cli"
   version "0.46.6"
-  license "MIT"
+  license :cannot_represent
 
   on_macos do
     on_arm do
