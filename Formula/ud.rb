@@ -7,7 +7,7 @@ class Ud < Formula
   version "0.49.0"
   license :cannot_represent
 
-  disable! date: "2026-07-11", because: "the Homebrew channel is no longer maintained. Install via npm instead: `npm install -g @oatnil/ud`"
+  disable! date: "2026-03-15", because: "is no longer distributed via Homebrew. Install via npm instead: `npm install -g @oatnil/ud`"
 
   on_macos do
     on_arm do
