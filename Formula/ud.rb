@@ -2,10 +2,12 @@
 # frozen_string_literal: true
 
 class Ud < Formula
-  desc "UnderControl CLI - task and expense management from the terminal"
+  desc "UnDercontrol CLI - task and expense management from the terminal"
   homepage "https://github.com/oatnil-top/ud-cli"
   version "0.49.0"
   license :cannot_represent
+
+  disable! date: "2026-07-11", because: "the Homebrew channel is no longer maintained. Install via npm instead: `npm install -g @oatnil/ud`"
 
   on_macos do
     on_arm do
