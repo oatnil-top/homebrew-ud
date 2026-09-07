@@ -6,8 +6,13 @@ The official Homebrew tap for the UnDercontrol CLI (`ud`).
 
 ```bash
 brew tap oatnil-top/ud
+brew trust oatnil-top/ud   # Homebrew >= 6 only; older versions have no `trust`
 brew install ud
 ```
+
+Homebrew 6 refuses to load a formula from a third-party tap until you trust it,
+and says so with a hard error rather than a prompt. Linuxbrew and Homebrew 4/5
+do not have the `trust` subcommand — skip that line there.
 
 ## Upgrade
 
