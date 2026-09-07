@@ -11,22 +11,18 @@ class Ud < Formula
   version "0.148.1"
   license :cannot_represent
 
+  # url/sha256 only in the platform blocks, and ONE class-level def install.
+  # A def install nested inside an on_arm/on_intel block installs fine but fails
+  # brew audit ("Do not define methods in blocks") -- four times, once per block.
+  # The filename the archive unpacks to is derivable, so derive it.
   on_macos do
     on_arm do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.148.1/ud_0.148.1_darwin_arm64.tar.gz"
       sha256 "3cdb5f4eeb30a206b438d2a41675b502038c0c157817e2d6e6e5c41e8f1d25b9"
-
-      def install
-        bin.install "ud_0.148.1_darwin_arm64" => "ud"
-      end
     end
     on_intel do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.148.1/ud_0.148.1_darwin_amd64.tar.gz"
       sha256 "b6498e266ae0fd85ac21007a7efb772fd00067e5d89e04d456ea5439211a6f8e"
-
-      def install
-        bin.install "ud_0.148.1_darwin_amd64" => "ud"
-      end
     end
   end
 
@@ -34,19 +30,17 @@ class Ud < Formula
     on_arm do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.148.1/ud_0.148.1_linux_arm64.tar.gz"
       sha256 "f8bb28b0eabaa03cb9c942ba165656692a21c19272ad0d672e4e41b9e149d029"
-
-      def install
-        bin.install "ud_0.148.1_linux_arm64" => "ud"
-      end
     end
     on_intel do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.148.1/ud_0.148.1_linux_amd64.tar.gz"
       sha256 "d36b38f6dd14ea571ac52a218ee6a91f9326e7ad4a5b0ccede846c0f614fe70d"
-
-      def install
-        bin.install "ud_0.148.1_linux_amd64" => "ud"
-      end
     end
+  end
+
+  def install
+    os = OS.mac? ? "darwin" : "linux"
+    arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+    bin.install "ud_#{version}_#{os}_#{arch}" => "ud"
   end
 
   test do

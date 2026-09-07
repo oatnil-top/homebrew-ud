@@ -168,22 +168,18 @@ class Ud < Formula
   version "$VERSION"
   license :cannot_represent
 
+  # url/sha256 only in the platform blocks, and ONE class-level def install.
+  # A def install nested inside an on_arm/on_intel block installs fine but fails
+  # brew audit ("Do not define methods in blocks") -- four times, once per block.
+  # The filename the archive unpacks to is derivable, so derive it.
   on_macos do
     on_arm do
       url "$CDN_BASE_URL/$VERSION/ud_${VERSION}_darwin_arm64.tar.gz"
       sha256 "$DARWIN_ARM64_SHA"
-
-      def install
-        bin.install "ud_${VERSION}_darwin_arm64" => "ud"
-      end
     end
     on_intel do
       url "$CDN_BASE_URL/$VERSION/ud_${VERSION}_darwin_amd64.tar.gz"
       sha256 "$DARWIN_AMD64_SHA"
-
-      def install
-        bin.install "ud_${VERSION}_darwin_amd64" => "ud"
-      end
     end
   end
 
@@ -191,19 +187,17 @@ class Ud < Formula
     on_arm do
       url "$CDN_BASE_URL/$VERSION/ud_${VERSION}_linux_arm64.tar.gz"
       sha256 "$LINUX_ARM64_SHA"
-
-      def install
-        bin.install "ud_${VERSION}_linux_arm64" => "ud"
-      end
     end
     on_intel do
       url "$CDN_BASE_URL/$VERSION/ud_${VERSION}_linux_amd64.tar.gz"
       sha256 "$LINUX_AMD64_SHA"
-
-      def install
-        bin.install "ud_${VERSION}_linux_amd64" => "ud"
-      end
     end
+  end
+
+  def install
+    os = OS.mac? ? "darwin" : "linux"
+    arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+    bin.install "ud_#{version}_#{os}_#{arch}" => "ud"
   end
 
   test do
@@ -211,6 +205,30 @@ class Ud < Formula
   end
 end
 EOF
+
+# Syntax-check what we just wrote. This is not ceremony: the heredoc above is
+# UNQUOTED on purpose (it has to expand $VERSION and the sha variables), which
+# means a backtick anywhere inside it is command substitution. A backtick in a
+# comment once ran `brew audit` mid-generation and spliced ~40 lines of audit
+# output from unrelated taps straight into Formula/ud.rb. The file still looked
+# plausible at a glance and git would have committed it happily. Ruby would not.
+#
+# Limit, stated honestly: this catches a MULTI-line splice (proven by kill-it on
+# 2026-09-07 -- injecting a backticked command whose output is several lines makes
+# ruby -c exit 1 and this script refuse). A one-line splice inside a comment stays
+# syntactically valid and would slip through. The real rule is still "no backticks
+# in the heredoc"; ruby -c is the net under it.
+if command -v ruby >/dev/null 2>&1; then
+    if ! ruby -c "$FORMULA_FILE" >/dev/null 2>&1; then
+        echo ""
+        echo "✗ The generated formula is not valid Ruby:"
+        ruby -c "$FORMULA_FILE" 2>&1 | sed 's/^/    /'
+        echo "  (Check for backticks or \$ in the heredoc block of this script.)"
+        exit 1
+    fi
+    echo ""
+    echo "✓ Generated formula parses as Ruby"
+fi
 
 echo ""
 echo "Formula updated to version $VERSION"
