@@ -1,47 +1,170 @@
 #!/bin/bash
-# Update the Homebrew formula with new version and checksums
-# Usage: ./update-formula.sh <version>
-# Example: ./update-formula.sh 0.22.0
+#
+# Update the Homebrew formula to <version>.
+#
+#   ./update-formula.sh <version>            verify the published bytes, then write the formula
+#   ./update-formula.sh <version> --check    verify only, write nothing (exit non-zero on any problem)
+#
+# Example: ./update-formula.sh 0.148.1
+#
+# WHY THIS SCRIPT DOWNLOADS BEFORE IT WRITES
+# ------------------------------------------
+# The previous edition read sha256 values out of the LOCAL build's checksums
+# file and wrote them into the formula next to a CDN URL it never contacted.
+# That makes the formula a claim about the CDN written from something that is
+# not the CDN, and the claim went wrong: the tap sat pinned at 0.49.0 whose
+# objects are not in the bucket at all -- every URL in it is a live 404, so
+# `brew install ud` could not have worked even before the formula was disabled.
+# Nothing in the old flow could have caught that, because nothing in the old
+# flow ever asked the bucket a question.
+#
+# So the order is inverted. The published object is the source of truth:
+#
+#   1. HEAD each URL         -> 404 here means "publish the release first", and
+#                               is a refusal, not a warning.
+#   2. GET it and sha256 it  -> the formula pins the hash of bytes that were
+#                               actually served, from the actual URL brew will
+#                               use. A truncated upload or a re-uploaded
+#                               different build cannot slip through.
+#   3. cross-check the local checksums file, if one is present -> disagreement
+#                               means what we published is not what we built.
+#   4. only then write Formula/ud.rb.
+#
+# Run it with --check any time to ask "does the current formula still resolve?"
+# without changing anything.
+#
+# Download source: R2, deliberately. There is no public GitHub repo for the CLI
+# (`oatnil-top/ud-cli` is a 404 and the source lives in the private monorepo),
+# so GitHub release assets are not a thing brew could fetch anonymously. R2 is
+# already where auto/upload-cli-to-r2.sh publishes and where checksums.txt
+# already lives. See card 7a6ea4c7.
+#
+# ⚠️ auto/upload-cli-to-r2.sh prunes cli/releases/ to the newest KEEP_VERSIONS
+# (default 10). Pin a version older than that and the formula 404s again — which
+# is exactly what step 1 above will tell you.
 
-set -e
+set -euo pipefail
 
-VERSION="${1}"
+VERSION="${1:-}"
+MODE="${2:-write}"
+
 if [ -z "$VERSION" ]; then
-    echo "Usage: $0 <version>"
-    echo "Example: $0 0.22.0"
+    echo "Usage: $0 <version> [--check]"
+    echo "Example: $0 0.148.1"
+    exit 1
+fi
+
+if [[ "$MODE" == "--check" ]]; then
+    MODE="check"
+elif [[ "$MODE" != "write" ]]; then
+    echo "Error: unknown option '$MODE' (expected --check)"
     exit 1
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORMULA_FILE="$SCRIPT_DIR/Formula/ud.rb"
 CHECKSUMS_FILE="$SCRIPT_DIR/../tmp/cli-release/ud_${VERSION}_checksums.txt"
-
-if [ ! -f "$CHECKSUMS_FILE" ]; then
-    echo "Error: Checksums file not found: $CHECKSUMS_FILE"
-    echo "Make sure you've built the CLI first with: make release-cli-build version=$VERSION"
-    exit 1
-fi
-
-# Extract checksums - match specific version to avoid mixing with other versions
-DARWIN_ARM64_SHA=$(grep "ud_${VERSION}_darwin_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
-DARWIN_AMD64_SHA=$(grep "ud_${VERSION}_darwin_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
-LINUX_ARM64_SHA=$(grep "ud_${VERSION}_linux_arm64" "$CHECKSUMS_FILE" | awk '{print $1}')
-LINUX_AMD64_SHA=$(grep "ud_${VERSION}_linux_amd64" "$CHECKSUMS_FILE" | awk '{print $1}')
-
-if [ -z "$DARWIN_ARM64_SHA" ] || [ -z "$DARWIN_AMD64_SHA" ] || [ -z "$LINUX_ARM64_SHA" ] || [ -z "$LINUX_AMD64_SHA" ]; then
-    echo "Error: Could not extract all checksums from $CHECKSUMS_FILE"
-    exit 1
-fi
-
 CDN_BASE_URL="https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases"
+
+PLATFORMS="darwin_arm64 darwin_amd64 linux_arm64 linux_amd64"
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+sha256_of() {
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{print $1}'
+    else
+        sha256sum "$1" | awk '{print $1}'
+    fi
+}
+
+echo "Verifying published artifacts for $VERSION at $CDN_BASE_URL/$VERSION/ ..."
+echo ""
+
+FAILED=0
+for plat in $PLATFORMS; do
+    file="ud_${VERSION}_${plat}.tar.gz"
+    url="$CDN_BASE_URL/$VERSION/$file"
+
+    code="$(curl -s -o /dev/null -w '%{http_code}' -I "$url" || echo 000)"
+    if [[ "$code" != "200" ]]; then
+        echo "  ✗ $plat  HTTP $code  $url"
+        echo "      The formula must never point at an object that is not there."
+        echo "      Publish the release first: ./auto/upload-cli-to-r2.sh $VERSION r2"
+        FAILED=1
+        continue
+    fi
+
+    if ! curl -fsSL "$url" -o "$TMP_DIR/$file"; then
+        echo "  ✗ $plat  HEAD said 200 but the download failed: $url"
+        FAILED=1
+        continue
+    fi
+
+    sha="$(sha256_of "$TMP_DIR/$file")"
+    printf '  ✓ %-14s %s  (%s bytes)\n' "$plat" "$sha" "$(wc -c < "$TMP_DIR/$file" | tr -d ' ')"
+    eval "SHA_${plat}=\$sha"
+done
+
+if [[ "$FAILED" -ne 0 ]]; then
+    echo ""
+    echo "Refusing to touch the formula: not every artifact is published and fetchable."
+    exit 1
+fi
+
+# Cross-check against the local build, when this machine is the one that built it.
+# A disagreement here means the bytes in the bucket are not the bytes we built --
+# a re-upload, a partial upload, or the wrong version. Either is worth stopping for.
+if [ -f "$CHECKSUMS_FILE" ]; then
+    echo ""
+    echo "Cross-checking against local build ($CHECKSUMS_FILE)..."
+    for plat in $PLATFORMS; do
+        local_sha="$(grep "ud_${VERSION}_${plat}.tar.gz" "$CHECKSUMS_FILE" | awk '{print $1}' || true)"
+        published_sha="$(eval "echo \$SHA_${plat}")"
+        if [ -z "$local_sha" ]; then
+            echo "  - $plat  not in the local checksums file, skipping"
+        elif [ "$local_sha" != "$published_sha" ]; then
+            echo "  ✗ $plat  published bytes differ from the local build!"
+            echo "      local:     $local_sha"
+            echo "      published: $published_sha"
+            FAILED=1
+        else
+            echo "  ✓ $plat  matches the local build"
+        fi
+    done
+    if [[ "$FAILED" -ne 0 ]]; then
+        echo ""
+        echo "Refusing to touch the formula: published != built."
+        exit 1
+    fi
+else
+    echo ""
+    echo "Note: no local checksums file at $CHECKSUMS_FILE — pinning the published bytes."
+fi
+
+if [[ "$MODE" == "check" ]]; then
+    echo ""
+    echo "✓ $VERSION verifies. (--check: formula not written.)"
+    exit 0
+fi
+
+DARWIN_ARM64_SHA="$(eval "echo \$SHA_darwin_arm64")"
+DARWIN_AMD64_SHA="$(eval "echo \$SHA_darwin_amd64")"
+LINUX_ARM64_SHA="$(eval "echo \$SHA_linux_arm64")"
+LINUX_AMD64_SHA="$(eval "echo \$SHA_linux_amd64")"
 
 cat > "$FORMULA_FILE" << EOF
 # typed: false
 # frozen_string_literal: true
 
+# Generated by update-formula.sh -- do not hand-edit.
+# Every sha256 below is the hash of bytes actually downloaded from the url above
+# it, at the moment this file was written. See update-formula.sh for why.
+
 class Ud < Formula
-  desc "UnderControl CLI - task and expense management from the terminal"
-  homepage "https://github.com/oatnil-top/ud-cli"
+  desc "UnDercontrol CLI - task and expense management from the terminal"
+  homepage "https://ud.oatnil.com"
   version "$VERSION"
   license :cannot_represent
 
@@ -89,13 +212,8 @@ class Ud < Formula
 end
 EOF
 
-echo "Formula updated to version $VERSION"
 echo ""
-echo "Checksums:"
-echo "  darwin_arm64: $DARWIN_ARM64_SHA"
-echo "  darwin_amd64: $DARWIN_AMD64_SHA"
-echo "  linux_arm64:  $LINUX_ARM64_SHA"
-echo "  linux_amd64:  $LINUX_AMD64_SHA"
+echo "Formula updated to version $VERSION"
 echo ""
 echo "Next steps:"
 echo "  1. cd homebrew-ud"
