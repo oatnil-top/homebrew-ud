@@ -164,7 +164,7 @@ cat > "$FORMULA_FILE" << EOF
 
 class Ud < Formula
   desc "UnDercontrol CLI - task and expense management from the terminal"
-  homepage "https://ud.oatnil.com"
+  homepage "https://oatnil.com/docs/cli/"
   version "$VERSION"
   license :cannot_represent
 
