@@ -3,7 +3,9 @@
 # Update the Homebrew formula to <version>.
 #
 #   ./update-formula.sh <version>            verify the published bytes, then write the formula
-#   ./update-formula.sh <version> --check    verify only, write nothing (exit non-zero on any problem)
+#   ./update-formula.sh <version> --check    verify only, write nothing; exits non-zero if any
+#                                            artifact is missing OR if the formula's pinned
+#                                            sha256 no longer matches the published bytes
 #
 # Example: ./update-formula.sh 0.148.1
 #
@@ -29,6 +31,11 @@
 #   3. cross-check the local checksums file, if one is present -> disagreement
 #                               means what we published is not what we built.
 #   4. only then write Formula/ud.rb.
+#
+#   5. --check stops before step 4 and instead compares the four sha256 values
+#      the CURRENT formula pins against the bytes just downloaded. That is the
+#      comparison brew itself makes, so a green --check means `brew install ud`
+#      works; "the URLs are all 200" does not mean that (b60c9811).
 #
 # Run it with --check any time to ask "does the current formula still resolve?"
 # without changing anything.
@@ -143,9 +150,74 @@ else
     echo "Note: no local checksums file at $CHECKSUMS_FILE — pinning the published bytes."
 fi
 
+# --check is the probe half of this script: it must answer "will `brew install ud`
+# work right now?", and downloading the bytes does not answer that on its own.
+# What brew actually compares is the sha256 PINNED IN THE FORMULA against the
+# bytes the URL serves today, so that is the comparison --check has to make.
+#
+# It did not, until 2026-09-09, and the gap was not theoretical: on 0.149.0 the
+# formula was generated from the artifacts of a CI run that was later re-run,
+# and the re-run overwrote every tarball in cli/releases/0.149.0/ with new bytes.
+# The URLs still answered 200, the downloads still hashed fine, --check still
+# printed a wall of green ticks -- and `brew install ud` failed on all four
+# platforms with "SHA-256 mismatch". Nothing pointed at the object being swapped
+# under a formula that was correct when it was written. See card b60c9811.
+#
+# So: in check mode, read what the formula pins and diff it against what we just
+# downloaded. Any disagreement -- a wrong version, a missing pin, a swapped
+# object -- exits non-zero.
 if [[ "$MODE" == "check" ]]; then
     echo ""
-    echo "✓ $VERSION verifies. (--check: formula not written.)"
+    echo "Comparing the current formula's pinned sha256 values against those bytes..."
+
+    if [ ! -f "$FORMULA_FILE" ]; then
+        echo "  ✗ no formula at $FORMULA_FILE"
+        exit 1
+    fi
+
+    formula_version="$(awk '$1 == "version" { gsub(/"/, "", $2); print $2; exit }' "$FORMULA_FILE")"
+    if [ "$formula_version" != "$VERSION" ]; then
+        echo "  ✗ the formula pins version $formula_version, not $VERSION"
+        echo "      Its sha256 values belong to a different release, so there is"
+        echo "      nothing meaningful to compare. Regenerate: $0 $VERSION"
+        exit 1
+    fi
+
+    # Pair each pinned sha256 with the url line above it rather than trusting the
+    # order of the platform blocks -- the pin that matters for a platform is the
+    # one brew reads after that platform's url.
+    for plat in $PLATFORMS; do
+        file="ud_${VERSION}_${plat}.tar.gz"
+        pinned="$(awk -v f="$file" '
+            index($0, f) > 0 { want = 1; next }
+            want && $1 == "sha256" { gsub(/"/, "", $2); print $2; want = 0 }
+        ' "$FORMULA_FILE")"
+        published="$(eval "echo \$SHA_${plat}")"
+
+        if [ -z "$pinned" ]; then
+            echo "  ✗ $plat  the formula pins no sha256 for $file"
+            FAILED=1
+        elif [ "$pinned" != "$published" ]; then
+            echo "  ✗ $plat  the formula pins bytes that are no longer served!"
+            echo "      formula:   $pinned"
+            echo "      published: $published"
+            FAILED=1
+        else
+            printf '  ✓ %-14s matches the formula\n' "$plat"
+        fi
+    done
+
+    if [[ "$FAILED" -ne 0 ]]; then
+        echo ""
+        echo "✗ brew install ud is broken for the platforms marked above:"
+        echo "  brew will refuse the download with a SHA-256 mismatch."
+        echo "  Fix by regenerating and pushing the formula: $0 $VERSION"
+        exit 1
+    fi
+
+    echo ""
+    echo "✓ $VERSION verifies, and the current formula pins exactly these bytes."
+    echo "  (--check: formula not written.)"
     exit 0
 fi
 
