@@ -18,22 +18,22 @@ class Ud < Formula
   on_macos do
     on_arm do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.149.0/ud_0.149.0_darwin_arm64.tar.gz"
-      sha256 "94d07d08d247161eec40e84e38d3e3e6fb4f2f0b87b7fa1e6a3170b2fe6bd0b0"
+      sha256 "187217148768b8514e3e84884b9b7e7052f3d6ddb0817bf2fbfbf486a2147705"
     end
     on_intel do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.149.0/ud_0.149.0_darwin_amd64.tar.gz"
-      sha256 "d6c7e0117dcd022883508fc7899e3ee1d29afb7c8f79d19ee07b45f332d6f39f"
+      sha256 "e7d9759a010b609e431c06ad8de4fc1e0030c3312e970895062cc510e2f5c430"
     end
   end
 
   on_linux do
     on_arm do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.149.0/ud_0.149.0_linux_arm64.tar.gz"
-      sha256 "66623fc261e859d83b5c513883510c6fb4ce5ebe2938a5daf839b1b6c8756d35"
+      sha256 "42590256011247e95f6f651de08f2dde1e2d11fa7131139af8fbbe2781004405"
     end
     on_intel do
       url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.149.0/ud_0.149.0_linux_amd64.tar.gz"
-      sha256 "e073eb8a52b55578c0c6ec7ff6220225087967dbe91d2d2da7e80d7239616caf"
+      sha256 "49d004db3519aeb3a085305560e48acfb72c272f19d5b9bb4d87e1cdcd3b1a65"
     end
   end
 
