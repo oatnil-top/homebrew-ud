@@ -8,7 +8,7 @@
 class Ud < Formula
   desc "AI agent CLI for udctl - tasks, notes and expenses from the terminal"
   homepage "https://udctl.com/docs/cli/"
-  version "0.151.0"
+  version "0.152.0"
   license :cannot_represent
 
   # url/sha256 only in the platform blocks, and ONE class-level def install.
@@ -17,23 +17,23 @@ class Ud < Formula
   # The filename the archive unpacks to is derivable, so derive it.
   on_macos do
     on_arm do
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.151.0/ud_0.151.0_darwin_arm64.tar.gz"
-      sha256 "416d26bbda7606807da1f7615e0189bf171fb78e07081cd74be57cd95a5d0ec4"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.152.0/ud_0.152.0_darwin_arm64.tar.gz"
+      sha256 "bedca59d298b9dc434306eb885cec87da7b4e661d7006215b780fa95f03bb6ce"
     end
     on_intel do
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.151.0/ud_0.151.0_darwin_amd64.tar.gz"
-      sha256 "bf7ef5bc4d3d6b3e225279bfd3d17c48b7f7fb16f79e31fce96611ea2370dc36"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.152.0/ud_0.152.0_darwin_amd64.tar.gz"
+      sha256 "5204e721171104a6b2c1da8ce3169be062ee3116cc2329f3c6dcbe8c333ae03a"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.151.0/ud_0.151.0_linux_arm64.tar.gz"
-      sha256 "33955cac3a15ab250845e262f26e1ca02fb585cd226b5455aa0e296c60c0252b"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.152.0/ud_0.152.0_linux_arm64.tar.gz"
+      sha256 "968224182948efaa00be0b5acd315a565a497f4e164b65bbd714d68bbf9d1baa"
     end
     on_intel do
-      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.151.0/ud_0.151.0_linux_amd64.tar.gz"
-      sha256 "676479b8270fe6a373fee586be789cc6d808ef3478cdaea8c718acf83e798e7d"
+      url "https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases/0.152.0/ud_0.152.0_linux_amd64.tar.gz"
+      sha256 "ae3c423bbb38f7ba0a8eb909afc69d03dc114e2d7223ecbb5dae58ec91169eaa"
     end
   end
 
