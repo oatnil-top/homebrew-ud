@@ -6,8 +6,8 @@
 # it, at the moment this file was written. See update-formula.sh for why.
 
 class Ud < Formula
-  desc "UnDercontrol CLI - task and expense management from the terminal"
-  homepage "https://oatnil.com/docs/cli/"
+  desc "AI agent CLI for udctl - tasks, notes and expenses from the terminal"
+  homepage "https://udctl.com/docs/cli/"
   version "0.150.0"
   license :cannot_represent
 
@@ -41,9 +41,15 @@ class Ud < Formula
     os = OS.mac? ? "darwin" : "linux"
     arch = Hardware::CPU.arm? ? "arm64" : "amd64"
     bin.install "ud_#{version}_#{os}_#{arch}" => "ud"
+    # The product is called udctl; the command itself stays ud. Ship both names off
+    # the one binary so "which udctl" resolves after a plain brew install ud.
+    # (No backticks in this heredoc -- see the note under it.)
+    bin.install_symlink bin/"ud" => "udctl"
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/ud --version")
+    # The alias is part of what we ship, so test it, not just the real name.
+    assert_match version.to_s, shell_output("#{bin}/udctl --version")
   end
 end
