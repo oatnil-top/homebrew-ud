@@ -71,7 +71,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORMULA_FILE="$SCRIPT_DIR/Formula/ud.rb"
 CHECKSUMS_FILE="$SCRIPT_DIR/../tmp/cli-release/ud_${VERSION}_checksums.txt"
-CDN_BASE_URL="https://pub-35d77f83ee8a41798bb4b2e1831ac70a.r2.dev/cli/releases"
+CDN_BASE_URL="https://dl.udctl.com/cli/releases"
 
 PLATFORMS="darwin_arm64 darwin_amd64 linux_arm64 linux_amd64"
 
