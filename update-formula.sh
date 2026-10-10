@@ -587,6 +587,8 @@ class UdServer < Formula
 
       Start now and at login:  brew services start ud-server
       Then open http://localhost:8080 (personal@undercontrol.local / personal123).
+      After adding a license (LICENSE_TOKEN) to that file, the server runs as Pro and
+      requires ADMIN_EMAIL and ADMIN_PASSWORD there too; log in with those instead.
 
       The server listens on all network interfaces, not only localhost, so other
       machines on your network can reach port 8080. To serve them on purpose, set

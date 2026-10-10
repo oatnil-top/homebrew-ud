@@ -7,7 +7,8 @@ server (`ud-server`) and the macOS desktop app (cask `undercontrol`).
 
 ```bash
 brew tap oatnil-top/ud
-brew trust oatnil-top/ud   # Homebrew >= 6 only; older versions have no `trust`
+# Homebrew >= 6 only; older versions have no `trust`
+brew trust oatnil-top/ud
 brew install ud
 ```
 
