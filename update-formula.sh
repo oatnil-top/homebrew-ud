@@ -1,28 +1,47 @@
 #!/bin/bash
 #
-# Update both Homebrew formulae to <version>: Formula/ud.rb (the CLI) and
-# Formula/ud-server.rb (the self-hosted server).
+# Update everything in the tap to <version>: Formula/ud.rb (the CLI),
+# Formula/ud-server.rb (the self-hosted server) and Casks/undercontrol.rb (the
+# macOS desktop app).
 #
-#   ./update-formula.sh <version>            verify the published bytes, then write both formulae
+#   ./update-formula.sh <version>            verify the published bytes, then write all three
 #   ./update-formula.sh <version> --check    verify only, write nothing; exits non-zero if any
-#                                            artifact is missing OR if a formula's pinned
-#                                            sha256 no longer matches the published bytes
+#                                            artifact is missing OR if a formula's or the
+#                                            cask's pinned sha256 no longer matches the
+#                                            published bytes
 #
 # Example: ./update-formula.sh 0.148.1
 #
-# ONE VERSION, BOTH FORMULAE, ALL OR NOTHING
-# ------------------------------------------
-# A release ships the CLI and the server under one version number, so the tap
-# pins both to the same version. If either side is not published yet, nothing is
-# written: a tap where ud.rb says 0.162.0 and ud-server.rb still says 0.161.1 is
-# a state nobody would recognise as "half a release" from the outside.
-# The two halves come from different places and are published by different CI
-# workflows, so "the CLI is up" says nothing about the server:
-#   ud        -> R2 (dl.udctl.com/cli/releases), release-cli.yml
-#   ud-server -> the npm registry, release-server.yml. The formula pulls the very
-#                @oatnil/ud-server-<os>-<cpu> tarball `npm i -g @oatnil/ud-server`
-#                installs, so brew and npm users run the same bytes. There is no R2
-#                copy of the server binary to point at instead.
+# ONE VERSION, THREE FILES, ALL OR NOTHING
+# ----------------------------------------
+# A release ships the CLI, the server and the desktop app under one version
+# number, so the tap pins all three to the same version. If any of them is not
+# published yet, nothing is written: a tap where ud.rb says 0.162.0 and
+# ud-server.rb still says 0.161.1 is a state nobody would recognise as "half a
+# release" from the outside.
+# The three come from different places and are published by different steps,
+# so "the CLI is up" says nothing about the others:
+#   ud           -> R2 (dl.udctl.com/cli/releases), release-cli.yml
+#   ud-server    -> the npm registry, release-server.yml. The formula pulls the very
+#                   @oatnil/ud-server-<os>-<cpu> tarball `npm i -g @oatnil/ud-server`
+#                   installs, so brew and npm users run the same bytes. There is no R2
+#                   copy of the server binary to point at instead.
+#   undercontrol -> R2 (dl.udctl.com/releases/<version>/), auto/upload-electron-to-r2.sh
+#                   after the release's desktop build. The cask pins the very
+#                   notarized, stapled DMGs the download page links to, and the
+#                   sha512 of those bytes must match the release's own
+#                   latest-mac.yml (written by electron-builder, re-synced after
+#                   stapling) -- the cask's equivalent of npm's dist.integrity.
+#
+# Caution: the desktop uploader keeps only the newest KEEP_VERSIONS (default 2)
+# directories under releases/. A cask left two releases behind 404s, a much
+# shorter horizon than the CLI's ten. Hence one script for all three: the cask
+# moves exactly when the formulae do.
+#
+# The cask is named after the app bundle (UnDercontrol.app -> undercontrol), as
+# Homebrew derives cask tokens. Not "udctl": the ud formula already installs a
+# command called udctl, and `brew install udctl` giving you the desktop app
+# would be a trap (owner, 2026-10-10, card 8664258c).
 #
 # WHY THIS SCRIPT DOWNLOADS BEFORE IT WRITES
 # ------------------------------------------
@@ -95,6 +114,10 @@ SERVER_FORMULA_FILE="$SCRIPT_DIR/Formula/ud-server.rb"
 CHECKSUMS_FILE="$SCRIPT_DIR/../tmp/cli-release/ud_${VERSION}_checksums.txt"
 CDN_BASE_URL="https://dl.udctl.com/cli/releases"
 NPM_REGISTRY="https://registry.npmjs.org"
+CASK_FILE="$SCRIPT_DIR/Casks/undercontrol.rb"
+DESKTOP_BASE_URL="https://dl.udctl.com/releases"
+# electron-builder's arch names; the cask's `arch arm:, intel:` maps onto these.
+DESKTOP_ARCHES="arm64 x64"
 
 PLATFORMS="darwin_arm64 darwin_amd64 linux_arm64 linux_amd64"
 
@@ -113,6 +136,10 @@ ud_url()          { echo "$CDN_BASE_URL/$VERSION/$(ud_file "$1")"; }
 server_file()     { echo "ud-server-$(npm_suffix "$1")-${VERSION}.tgz"; }
 server_url()      { echo "$NPM_REGISTRY/@oatnil/ud-server-$(npm_suffix "$1")/-/$(server_file "$1")"; }
 server_meta_url() { echo "$NPM_REGISTRY/@oatnil/ud-server-$(npm_suffix "$1")/$VERSION"; }
+
+dmg_file()         { echo "undercontrol-desktop-${VERSION}-$1.dmg"; }
+dmg_url()          { echo "$DESKTOP_BASE_URL/$VERSION/$(dmg_file "$1")"; }
+desktop_manifest() { echo "$DESKTOP_BASE_URL/$VERSION/latest-mac.yml"; }
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -156,6 +183,7 @@ fetch() {
 echo "Verifying published artifacts for $VERSION ..."
 echo "  ud        <- $CDN_BASE_URL/$VERSION/"
 echo "  ud-server <- $NPM_REGISTRY/@oatnil/ud-server-<os>-<cpu>/"
+echo "  undercontrol (cask) <- $DESKTOP_BASE_URL/$VERSION/  (two DMGs, ~270 MB each)"
 echo ""
 
 for plat in $PLATFORMS; do
@@ -164,12 +192,16 @@ done
 for plat in $PLATFORMS; do
     fetch "SRV_SHA_${plat}" "$(server_url "$plat")" "ud-server $plat"
 done
+for arch in $DESKTOP_ARCHES; do
+    fetch "DMG_SHA_${arch}" "$(dmg_url "$arch")" "undercontrol $arch"
+done
 
 if [[ "$FAILED" -ne 0 ]]; then
     echo ""
-    echo "Refusing to touch either formula: not every artifact is published and fetchable."
-    echo "  ud missing        -> ./auto/upload-cli-to-r2.sh $VERSION r2 (or wait for release-cli.yml)"
-    echo "  ud-server missing -> wait for / re-run release-server.yml (npm publish)"
+    echo "Refusing to touch any of the three: not every artifact is published and fetchable."
+    echo "  ud missing           -> ./auto/upload-cli-to-r2.sh $VERSION r2 (or wait for release-cli.yml)"
+    echo "  ud-server missing    -> wait for / re-run release-server.yml (npm publish)"
+    echo "  undercontrol missing -> ./auto/upload-electron-to-r2.sh $VERSION r2 (after the desktop build)"
     exit 1
 fi
 
@@ -195,7 +227,7 @@ if [ -f "$CHECKSUMS_FILE" ]; then
     done
     if [[ "$FAILED" -ne 0 ]]; then
         echo ""
-        echo "Refusing to touch either formula: published != built."
+        echo "Refusing to touch any of the three: published != built."
         exit 1
     fi
 else
@@ -226,7 +258,47 @@ for plat in $PLATFORMS; do
 done
 if [[ "$FAILED" -ne 0 ]]; then
     echo ""
-    echo "Refusing to touch either formula: ud-server bytes could not be tied to npm's record."
+    echo "Refusing to touch any of the three: ud-server bytes could not be tied to npm's record."
+    exit 1
+fi
+
+# undercontrol: the release's own latest-mac.yml is electron-builder's record of
+# each DMG (sha512 in base64, and size), re-synced after stapling rewrote the
+# bytes. Mandatory, like dist.integrity: unreadable is "could not check", which
+# refuses. A mismatch means what is served is not what the release recorded --
+# typically a DMG re-uploaded without re-syncing the manifest.
+echo ""
+echo "Cross-checking undercontrol DMGs against $(desktop_manifest) ..."
+manifest="$(curl -fsSL "$(desktop_manifest)" 2>/dev/null || true)"
+for arch in $DESKTOP_ARCHES; do
+    file="$(dmg_file "$arch")"
+    # The files: list has "- url: <file>" then "sha512:" and "size:" lines.
+    want="$(printf '%s\n' "$manifest" | awk -v f="$file" '
+        $1 == "-" && $2 == "url:" { cur = $3; next }
+        cur == f && $1 == "sha512:" { print $2; exit }
+    ')"
+    want_size="$(printf '%s\n' "$manifest" | awk -v f="$file" '
+        $1 == "-" && $2 == "url:" { cur = $3; next }
+        cur == f && $1 == "size:" { print $2; exit }
+    ')"
+    got="$(openssl dgst -sha512 -binary "$TMP_DIR/$file" | base64 | tr -d '\n')"
+    got_size="$(wc -c < "$TMP_DIR/$file" | tr -d ' ')"
+    if [ -z "$want" ] || [ -z "$want_size" ]; then
+        echo "  ✗ $arch  no sha512/size for $file in $(desktop_manifest)"
+        echo "      Could not check is not a pass."
+        FAILED=1
+    elif [ "$want" != "$got" ] || [ "$want_size" != "$got_size" ]; then
+        echo "  ✗ $arch  downloaded DMG differs from latest-mac.yml!"
+        echo "      manifest:   sha512 $want  size $want_size"
+        echo "      downloaded: sha512 $got  size $got_size"
+        FAILED=1
+    else
+        echo "  ✓ $arch  matches latest-mac.yml (sha512 and size)"
+    fi
+done
+if [[ "$FAILED" -ne 0 ]]; then
+    echo ""
+    echo "Refusing to touch any of the three: the DMGs could not be tied to the release's latest-mac.yml."
     exit 1
 fi
 
@@ -296,23 +368,59 @@ check_pins() {
 # So: in check mode, read what each formula pins and diff it against what we just
 # downloaded. Any disagreement -- a wrong version, a missing pin, a swapped
 # object -- exits non-zero.
+# check_cask: the same comparison for Casks/undercontrol.rb, whose shape differs:
+# one url built from #{version}/#{arch}, and one sha256 line carrying both arches
+# (sha256 arm: "...", intel: "..."), so the pin is read by its arch key.
+check_cask() {
+    local cask_version arch key pinned published
+    if [ ! -f "$CASK_FILE" ]; then
+        echo "  ✗ no cask at $CASK_FILE"
+        FAILED=1
+        return
+    fi
+    cask_version="$(awk '$1 == "version" { gsub(/"/, "", $2); print $2; exit }' "$CASK_FILE")"
+    if [ "$cask_version" != "$VERSION" ]; then
+        echo "  ✗ undercontrol  the cask pins version $cask_version, not $VERSION"
+        echo "      Regenerate: $0 $VERSION"
+        FAILED=1
+        return
+    fi
+    for arch in $DESKTOP_ARCHES; do
+        case "$arch" in arm64) key=arm ;; x64) key=intel ;; esac
+        pinned="$(grep -o "${key}: *\"[0-9a-f]*\"" "$CASK_FILE" | head -1 | sed 's/.*"\([0-9a-f]*\)"/\1/' || true)"
+        published="$(eval "echo \$DMG_SHA_${arch}")"
+        if [ -z "$pinned" ]; then
+            echo "  ✗ undercontrol $arch  the cask pins no sha256 for $key"
+            FAILED=1
+        elif [ "$pinned" != "$published" ]; then
+            echo "  ✗ undercontrol $arch  the cask pins bytes that are no longer served!"
+            echo "      cask:      $pinned"
+            echo "      published: $published"
+            FAILED=1
+        else
+            printf '  ✓ %-24s matches the cask\n' "undercontrol $arch"
+        fi
+    done
+}
+
 if [[ "$MODE" == "check" ]]; then
     echo ""
-    echo "Comparing the current formulae's pinned sha256 values against those bytes..."
+    echo "Comparing the current formulae's and cask's pinned sha256 values against those bytes..."
     check_pins "$FORMULA_FILE" "SHA_" ud_file
     check_pins "$SERVER_FORMULA_FILE" "SRV_SHA_" server_file
+    check_cask
 
     if [[ "$FAILED" -ne 0 ]]; then
         echo ""
         echo "✗ brew install is broken for what is marked above:"
         echo "  brew will refuse the download with a SHA-256 mismatch (or fetch the wrong version)."
-        echo "  Fix by regenerating and pushing the formulae: $0 $VERSION"
+        echo "  Fix by regenerating and pushing the tap: $0 $VERSION"
         exit 1
     fi
 
     echo ""
-    echo "✓ $VERSION verifies, and both formulae pin exactly these bytes."
-    echo "  (--check: formulae not written.)"
+    echo "✓ $VERSION verifies, and both formulae and the cask pin exactly these bytes."
+    echo "  (--check: nothing written.)"
     exit 0
 fi
 
@@ -529,6 +637,70 @@ if grep -q '@@' "$SERVER_FORMULA_FILE"; then
     exit 1
 fi
 
+# Casks/undercontrol.rb: quoted heredoc + sed, like ud-server.rb, so the Ruby
+# #{version}/#{arch} interpolation stays literal and nothing in it is shell.
+#
+# No auto_updates: the desktop app does not update itself. Its "Check for
+# Updates" only reads releases/latest/latest-mac.yml and opens udctl.com/download
+# in the browser (ud-electron-vite/src/main/update-checker.js), so brew is the
+# only thing that upgrades a brew-installed copy, and `brew upgrade` must see it.
+# A user who installs a newer DMG by hand over it leaves brew's record one
+# version behind; the next `brew upgrade` reinstalls over it, nothing breaks.
+#
+# No `binary` stanza: the app offers to symlink its bundled CLI to
+# /usr/local/bin/ud itself, and the ud formula owns the CLI in this tap.
+#
+# zap lists only paths the app is known to write (checked on a machine running
+# it, 2026-10-10). The data directory can be moved by the user (data-path.js);
+# a moved one is the user's, and zap does not chase it.
+mkdir -p "$(dirname "$CASK_FILE")"
+cat > "$CASK_FILE" << 'EOF'
+# Generated by update-formula.sh -- do not hand-edit.
+# Every sha256 below is the hash of bytes actually downloaded from the url, at
+# the moment this file was written, and those bytes were matched against the
+# release's own latest-mac.yml. See update-formula.sh for why.
+
+cask "undercontrol" do
+  arch arm: "arm64", intel: "x64"
+
+  version "@@VERSION@@"
+  sha256 arm:   "@@SHA_arm64@@",
+         intel: "@@SHA_x64@@"
+
+  url "https://dl.udctl.com/releases/#{version}/undercontrol-desktop-#{version}-#{arch}.dmg"
+  name "UnDercontrol"
+  desc "Desktop app for udctl tasks, notes and AI agents"
+  homepage "https://udctl.com/"
+
+  livecheck do
+    url "https://dl.udctl.com/releases/latest/latest-mac.yml"
+    strategy :electron_builder
+  end
+
+  depends_on macos: :monterey
+
+  app "UnDercontrol.app"
+
+  zap trash: [
+    "~/Library/Application Support/undercontrol-desktop",
+    "~/Library/Preferences/com.undercontrol.app.plist",
+    "~/Library/Saved Application State/com.undercontrol.app.savedState",
+  ]
+end
+EOF
+sed -i.bak -e "s|@@VERSION@@|${VERSION}|" "$CASK_FILE"
+for arch in $DESKTOP_ARCHES; do
+    sha="$(eval "echo \$DMG_SHA_${arch}")"
+    sed -i.bak -e "s|@@SHA_${arch}@@|${sha}|" "$CASK_FILE"
+done
+rm -f "$CASK_FILE.bak"
+if grep -q '@@' "$CASK_FILE"; then
+    echo ""
+    echo "✗ Unfilled placeholders left in $CASK_FILE:"
+    grep -n '@@' "$CASK_FILE" | sed 's/^/    /'
+    exit 1
+fi
+
 # Syntax-check what we just wrote. This is not ceremony: the heredocs above are
 # UNQUOTED on purpose (they have to expand $VERSION and the sha variables), which
 # means a backtick anywhere inside them is command substitution. A backtick in a
@@ -542,24 +714,24 @@ fi
 # syntactically valid and would slip through. The real rule is still "no backticks
 # in the heredoc"; ruby -c is the net under it.
 if command -v ruby >/dev/null 2>&1; then
-    for f in "$FORMULA_FILE" "$SERVER_FORMULA_FILE"; do
+    for f in "$FORMULA_FILE" "$SERVER_FORMULA_FILE" "$CASK_FILE"; do
         if ! ruby -c "$f" >/dev/null 2>&1; then
             echo ""
-            echo "✗ The generated formula is not valid Ruby: $f"
+            echo "✗ The generated file is not valid Ruby: $f"
             ruby -c "$f" 2>&1 | sed 's/^/    /'
             echo "  (Check for backticks or \$ in the heredoc blocks of this script.)"
             exit 1
         fi
     done
     echo ""
-    echo "✓ Both generated formulae parse as Ruby"
+    echo "✓ Both generated formulae and the cask parse as Ruby"
 fi
 
 echo ""
-echo "Formulae updated to version $VERSION (ud.rb, ud-server.rb)"
+echo "Tap updated to version $VERSION (ud.rb, ud-server.rb, Casks/undercontrol.rb)"
 echo ""
 echo "Next steps:"
 echo "  1. cd homebrew-ud"
-echo "  2. git add Formula/"
-echo "  3. git commit -m 'Update ud and ud-server to $VERSION'"
+echo "  2. git add Formula/ Casks/"
+echo "  3. git commit -m 'Update ud, ud-server and undercontrol to $VERSION'"
 echo "  4. git push"

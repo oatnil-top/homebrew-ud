@@ -1,7 +1,7 @@
 # Homebrew Tap for UnDercontrol
 
-The official Homebrew tap for the UnDercontrol CLI (`ud`) and the self-hosted
-server (`ud-server`).
+The official Homebrew tap for the UnDercontrol CLI (`ud`), the self-hosted
+server (`ud-server`) and the macOS desktop app (cask `undercontrol`).
 
 ## Installation
 
@@ -28,17 +28,38 @@ Upgrades replace only the binary; configuration and data stay. `JWT_SECRET` is
 generated at install. The server listens on all network interfaces; set `HOST_DOMAIN`
 in the `.env` to the URL other machines use if you serve them.
 
+## Desktop app (macOS)
+
+```bash
+brew install --cask undercontrol
+```
+
+Installs `UnDercontrol.app` (Apple Silicon or Intel, picked for your Mac) from the
+same notarized DMGs as https://udctl.com/download. Requires macOS 12 or later.
+
+The app does not update itself: its "Check for Updates" only tells you a newer
+version exists and opens the download page. If you installed with brew, upgrade
+with brew (below). Installing a DMG by hand over a brew-installed app works, but
+leaves brew's record one version behind until the next `brew upgrade`.
+
+The cask does not put `ud` on your PATH; that is the `ud` formula's job. The
+app's own "install the CLI" action symlinks `/usr/local/bin/ud`, which on an
+Intel Mac is also where the formula links `ud` -- use one or the other.
+
 ## Upgrade
 
 ```bash
 brew update
 brew upgrade ud
+brew upgrade --cask undercontrol
 ```
 
 ## Uninstall
 
 ```bash
 brew uninstall ud
+brew uninstall --cask undercontrol           # removes the app, keeps your data
+brew uninstall --cask --zap undercontrol     # ALSO DELETES your local data (unless you moved it)
 brew untap oatnil-top/ud
 ```
 
@@ -52,8 +73,9 @@ npm install -g @oatnil/ud
 
 ## For maintainers
 
-`Formula/ud.rb` and `Formula/ud-server.rb` are generated — do not hand-edit
-them. After publishing a release (CLI to R2, server to npm), run:
+`Formula/ud.rb`, `Formula/ud-server.rb` and `Casks/undercontrol.rb` are
+generated — do not hand-edit them. After publishing a release (CLI to R2,
+server to npm, desktop DMGs to R2), run:
 
 ```bash
 ./update-formula.sh <version>          # verify + write
@@ -66,8 +88,9 @@ refuses to write the formula, which is the failure this tap already had once:
 it sat pinned at 0.49.0, a version whose objects are not in the bucket, so every
 URL in the formula was a live 404.
 
-Note that the release uploader prunes R2 to the newest 10 CLI versions, so the
-formula must track a recent release.
+Note that the release uploaders prune R2 to the newest 10 CLI versions and the
+newest 2 desktop versions, so the tap must track a recent release: a cask two
+releases behind is a 404.
 
 ## About UnDercontrol
 
