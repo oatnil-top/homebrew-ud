@@ -20,7 +20,8 @@ do not have the `trust` subcommand — skip that line there.
 
 ```bash
 brew install ud-server
-brew services start ud-server     # runs in the background, starts again at login
+# runs in the background, starts again at login
+brew services start ud-server
 ```
 
 Then open http://localhost:8080. Configuration is in `$(brew --prefix)/etc/ud-server/.env`,
@@ -59,8 +60,10 @@ brew upgrade --cask undercontrol
 
 ```bash
 brew uninstall ud
-brew uninstall --cask undercontrol           # removes the app, keeps your data
-brew uninstall --cask --zap undercontrol     # ALSO DELETES your local data (unless you moved it)
+# removes the app, keeps your data
+brew uninstall --cask undercontrol
+# ALSO DELETES your local data (unless you moved it)
+brew uninstall --cask --zap undercontrol
 brew untap oatnil-top/ud
 ```
 
@@ -79,8 +82,10 @@ generated — do not hand-edit them. After publishing a release (CLI to R2,
 server to npm, desktop DMGs to R2), run:
 
 ```bash
-./update-formula.sh <version>          # verify + write
-./update-formula.sh <version> --check  # verify only, write nothing
+# verify + write
+./update-formula.sh <version>
+# verify only, write nothing
+./update-formula.sh <version> --check
 ```
 
 The script downloads every artifact from the URL the formula will point at and
