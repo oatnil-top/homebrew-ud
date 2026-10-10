@@ -1,6 +1,7 @@
-# Homebrew Tap for UnDercontrol CLI
+# Homebrew Tap for UnDercontrol
 
-The official Homebrew tap for the UnDercontrol CLI (`ud`).
+The official Homebrew tap for the UnDercontrol CLI (`ud`) and the self-hosted
+server (`ud-server`).
 
 ## Installation
 
@@ -13,6 +14,19 @@ brew install ud
 Homebrew 6 refuses to load a formula from a third-party tap until you trust it,
 and says so with a hard error rather than a prompt. Linuxbrew and Homebrew 4/5
 do not have the `trust` subcommand — skip that line there.
+
+## Self-hosted server
+
+```bash
+brew install ud-server
+brew services start ud-server     # runs in the background, starts again at login
+```
+
+Then open http://localhost:8080. Configuration is in `$(brew --prefix)/etc/ud-server/.env`,
+data in `$(brew --prefix)/var/ud-server`, the log in `$(brew --prefix)/var/log/ud-server.log`.
+Upgrades replace only the binary; configuration and data stay. `JWT_SECRET` is
+generated at install. The server listens on all network interfaces; set `HOST_DOMAIN`
+in the `.env` to the URL other machines use if you serve them.
 
 ## Upgrade
 
@@ -38,8 +52,8 @@ npm install -g @oatnil/ud
 
 ## For maintainers
 
-`Formula/ud.rb` is generated — do not hand-edit it. After publishing a CLI
-release to R2, run:
+`Formula/ud.rb` and `Formula/ud-server.rb` are generated — do not hand-edit
+them. After publishing a release (CLI to R2, server to npm), run:
 
 ```bash
 ./update-formula.sh <version>          # verify + write
