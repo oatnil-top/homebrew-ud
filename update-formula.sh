@@ -438,7 +438,7 @@ cat > "$FORMULA_FILE" << EOF
 # it, at the moment this file was written. See update-formula.sh for why.
 
 class Ud < Formula
-  desc "AI agent CLI for udctl - tasks, notes and expenses from the terminal"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/docs/cli/"
   version "$VERSION"
   license :cannot_represent
@@ -501,7 +501,7 @@ cat > "$SERVER_FORMULA_FILE" << 'EOF'
 # npm's own dist.integrity. See update-formula.sh for why.
 
 class UdServer < Formula
-  desc "Self-hosted UnDercontrol server - tasks, notes and the web app in one binary"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/"
   license :cannot_represent
 
@@ -671,7 +671,7 @@ cask "undercontrol" do
 
   url "https://dl.udctl.com/releases/#{version}/undercontrol-desktop-#{version}-#{arch}.dmg"
   name "UnDercontrol"
-  desc "Desktop app for udctl tasks, notes and AI agents"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/"
 
   livecheck do

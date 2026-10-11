@@ -12,7 +12,7 @@ cask "undercontrol" do
 
   url "https://dl.udctl.com/releases/#{version}/undercontrol-desktop-#{version}-#{arch}.dmg"
   name "UnDercontrol"
-  desc "Desktop app for udctl tasks, notes and AI agents"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/"
 
   livecheck do

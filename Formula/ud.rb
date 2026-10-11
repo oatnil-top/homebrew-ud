@@ -6,7 +6,7 @@
 # it, at the moment this file was written. See update-formula.sh for why.
 
 class Ud < Formula
-  desc "AI agent CLI for udctl - tasks, notes and expenses from the terminal"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/docs/cli/"
   version "0.162.0"
   license :cannot_represent

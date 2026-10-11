@@ -7,7 +7,7 @@
 # npm's own dist.integrity. See update-formula.sh for why.
 
 class UdServer < Formula
-  desc "Self-hosted UnDercontrol server - tasks, notes and the web app in one binary"
+  desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/"
   license :cannot_represent
 
