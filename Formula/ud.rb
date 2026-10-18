@@ -8,7 +8,7 @@
 class Ud < Formula
   desc "Self-hostable workspace for tasks, notes and expenses with a kubectl-style CLI"
   homepage "https://udctl.com/docs/cli/"
-  version "0.165.1"
+  version "0.166.0"
   license :cannot_represent
 
   # url/sha256 only in the platform blocks, and ONE class-level def install.
@@ -17,23 +17,23 @@ class Ud < Formula
   # The filename the archive unpacks to is derivable, so derive it.
   on_macos do
     on_arm do
-      url "https://dl.udctl.com/cli/releases/0.165.1/ud_0.165.1_darwin_arm64.tar.gz"
-      sha256 "54d5e83f81609118f27265bf9ed51b27109c7d69256fb01f048d85ce574ba787"
+      url "https://dl.udctl.com/cli/releases/0.166.0/ud_0.166.0_darwin_arm64.tar.gz"
+      sha256 "b66f871778bd2f65cfc11da7aecaa463d031180d5d423a16123061bad1d37e27"
     end
     on_intel do
-      url "https://dl.udctl.com/cli/releases/0.165.1/ud_0.165.1_darwin_amd64.tar.gz"
-      sha256 "1e85295a32cea394f781e70e748361cb15a128c30085fc083954da6abe76be5a"
+      url "https://dl.udctl.com/cli/releases/0.166.0/ud_0.166.0_darwin_amd64.tar.gz"
+      sha256 "cd9393b96073d65026e32f1a8b344f46b7736c54b8b77addc4b9be3de423c2fb"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://dl.udctl.com/cli/releases/0.165.1/ud_0.165.1_linux_arm64.tar.gz"
-      sha256 "44548fdecab6adfb2d24f0d238980e90abd7a86446add1acdd7eaf760eb848b6"
+      url "https://dl.udctl.com/cli/releases/0.166.0/ud_0.166.0_linux_arm64.tar.gz"
+      sha256 "b1222ba45fe1e4df7ce07cf1549859762f5a5eb54f523abf6f61a9c2b4cb85f3"
     end
     on_intel do
-      url "https://dl.udctl.com/cli/releases/0.165.1/ud_0.165.1_linux_amd64.tar.gz"
-      sha256 "bf46a0374116cdb8866d03d7e911dd883045d7bbc6c7e34d66f2c2dc1b1825ba"
+      url "https://dl.udctl.com/cli/releases/0.166.0/ud_0.166.0_linux_amd64.tar.gz"
+      sha256 "50359f2491b5c20e7028c07ceafa73418b0eafe01a4305b44554e8965aa9db12"
     end
   end
 
