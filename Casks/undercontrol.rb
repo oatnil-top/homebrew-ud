@@ -6,9 +6,9 @@
 cask "undercontrol" do
   arch arm: "arm64", intel: "x64"
 
-  version "0.175.0"
-  sha256 arm:   "11b1f7dc454681729dbd4f3afd14c3f31d60e4c770d2cd675f392de0ac72c885",
-         intel: "41dce09d1d926b967a9ed203711c64564c2fbba0b011aaf104dab93c1981aafb"
+  version "0.176.0"
+  sha256 arm:   "6e5eb2917894f7b01ae8dcb44c7c5e05221fe9fabe75a093ee974d89189857aa",
+         intel: "4b6d0cdbe7f9e5affce48d3edb15e6053d339e51fa4f812e73c3b5feaf68a01c"
 
   url "https://dl.udctl.com/releases/#{version}/undercontrol-desktop-#{version}-#{arch}.dmg"
   name "UnDercontrol"
