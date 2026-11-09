@@ -15,23 +15,23 @@ class UdServer < Formula
   # npm users run identical bytes. It unpacks to package/, which brew steps into.
   on_macos do
     on_arm do
-      url "https://registry.npmjs.org/@oatnil/ud-server-darwin-arm64/-/ud-server-darwin-arm64-0.184.1.tgz"
-      sha256 "661b58a7fb40acd5d8419fd4f36bd4d6d94953c7e30eaf68a577d55020a5b76e"
+      url "https://registry.npmjs.org/@oatnil/ud-server-darwin-arm64/-/ud-server-darwin-arm64-0.185.0.tgz"
+      sha256 "230ea96de929aa14bbc0936fa83775d44a5d0b08985dd1e54d1455c4c8175ad7"
     end
     on_intel do
-      url "https://registry.npmjs.org/@oatnil/ud-server-darwin-x64/-/ud-server-darwin-x64-0.184.1.tgz"
-      sha256 "5b61c34df8acf7410a06a4f4e73362095c181567012f28c3abbd15f6ff7969be"
+      url "https://registry.npmjs.org/@oatnil/ud-server-darwin-x64/-/ud-server-darwin-x64-0.185.0.tgz"
+      sha256 "321daa5b16f5294b2de91ff3fead1a3fd7586815e3e2cce9bc480925276a8d93"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://registry.npmjs.org/@oatnil/ud-server-linux-arm64/-/ud-server-linux-arm64-0.184.1.tgz"
-      sha256 "db0fb4219983bad8da9bb3ff5bdc76d6e21744b4d1913b3a429e863deb16b028"
+      url "https://registry.npmjs.org/@oatnil/ud-server-linux-arm64/-/ud-server-linux-arm64-0.185.0.tgz"
+      sha256 "b65401b3878446ef974efa4a6ac64b79acb3d2957c6402ab93aef79d5e965539"
     end
     on_intel do
-      url "https://registry.npmjs.org/@oatnil/ud-server-linux-x64/-/ud-server-linux-x64-0.184.1.tgz"
-      sha256 "7b2a4426ebea8baf0742d06443722d3dc6f0ffffaacd4dfda1f5562627ec8c41"
+      url "https://registry.npmjs.org/@oatnil/ud-server-linux-x64/-/ud-server-linux-x64-0.185.0.tgz"
+      sha256 "decc2d407679c03a3663f4ee6aa24bd1473981b32288383c4be628122f976750"
     end
   end
 
