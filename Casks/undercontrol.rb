@@ -6,9 +6,9 @@
 cask "undercontrol" do
   arch arm: "arm64", intel: "x64"
 
-  version "0.190.0"
-  sha256 arm:   "b3380ccd7f9dcb39e178cc707d83e53b2f2fe076f6fa87d156b24801e79a2b18",
-         intel: "44925804281f9c9e0f0c14a38dd44c9b29516a0530b0c306bdba7474751c1e28"
+  version "0.191.0"
+  sha256 arm:   "b09c87619766040a23c63c3cd055c3b8d2fb3d1a471cb518532c606c8e09954f",
+         intel: "8a3bc309cde4c1e98bdfabb67bb2d54aee4eaf141f435fad3b1eafa93736df72"
 
   url "https://dl.udctl.com/releases/#{version}/undercontrol-desktop-#{version}-#{arch}.dmg"
   name "UnDercontrol"
@@ -20,6 +20,7 @@ cask "undercontrol" do
     strategy :electron_builder
   end
 
+  auto_updates true
   depends_on macos: :monterey
 
   app "UnDercontrol.app"
