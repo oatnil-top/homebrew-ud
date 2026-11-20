@@ -642,12 +642,16 @@ fi
 # Casks/undercontrol.rb: quoted heredoc + sed, like ud-server.rb, so the Ruby
 # #{version}/#{arch} interpolation stays literal and nothing in it is shell.
 #
-# No auto_updates: the desktop app does not update itself. Its "Check for
-# Updates" only reads releases/latest/latest-mac.yml and opens udctl.com/download
-# in the browser (ud-electron-vite/src/main/update-checker.js), so brew is the
-# only thing that upgrades a brew-installed copy, and `brew upgrade` must see it.
-# A user who installs a newer DMG by hand over it leaves brew's record one
-# version behind; the next `brew upgrade` reinstalls over it, nothing breaks.
+# auto_updates true: from 0.191.0 the desktop app updates itself in place
+# (ud-electron-vite/src/main/updater.js: the user presses Update, the app
+# downloads the release's mac zip and Squirrel swaps the bundle). Without this
+# stanza brew and the app fight: the app moves to N+1, brew still records N, and
+# the next plain `brew upgrade` reinstalls the dmg over a copy that is already
+# current or newer. With it, `brew upgrade` leaves the cask alone unless asked
+# with --greedy, which is what Homebrew expects of a self-updating app.
+# Until 0.190.0 the stanza was deliberately absent, because "Check for Updates"
+# only opened the download page and brew was the one thing that upgraded a
+# brew-installed copy.
 #
 # No `binary` stanza: the app offers to symlink its bundled CLI to
 # /usr/local/bin/ud itself, and the ud formula owns the CLI in this tap.
@@ -679,6 +683,7 @@ cask "undercontrol" do
     strategy :electron_builder
   end
 
+  auto_updates true
   depends_on macos: :monterey
 
   app "UnDercontrol.app"
